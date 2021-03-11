@@ -1,50 +1,23 @@
 trigger NumberofcontactsonACC on Contact (after insert, after delete) {
 
-   Set<Id> accid = new Set<Id>();
-   Map<Id, List<Contact>> mapaccwithcon = new Map<Id, List<Contact>>();
-   Map<Id, List<Contact>> mapaccwithcondel = new Map<Id, List<Contact>>();
-   List <Account> queryacc = new List <Account>();
-
+  Set<id> accoid = new Set<id>();
+  List<Account> acc=new List<Account>();
     if(Trigger.isInsert){
-    for(Contact con : Trigger.new){
-         if(con.AccountId != null){
-             accid.add(con.AccountId);
-             if(mapaccwithcon.containsKey(con.AccountId)){
-             mapaccwithcon.get(con.AccountId).add(con);
-             }
-             else{
-             mapaccwithcon.put(con.AccountId,new List<Contact>());
-             }
-         }
+    for(Contact con: trigger.new){
+    accoid.add(con.AccountId);
     }
     }
-    if(Trigger.isdelete){
-    for(Contact con : Trigger.Old){
-         if(con.AccountId != null){
-             accid.add(con.AccountId);
-             if(mapaccwithcondel.containsKey(con.AccountId)){
-             mapaccwithcondel.get(con.AccountId).add(con);
-             }
-             else{
-             mapaccwithcondel.put(con.AccountId,new List<Contact>());
-             }
-         }
+    if(Trigger.Isdelete){
+    for(Contact con: trigger.old){
+    accoid.add(con.AccountId);
     }
     }
-    if(accid.size()>0){
-        queryacc = [select id,name,Number_of_Contacts__c from Account WHERE ID IN :accid];
+    for(Account a:[select id,name,Number_of_Contacts__c,(select id,name from contacts) from Account where id =:accoid]){
+   
+    a.Number_of_Contacts__c = a.contacts.size();
+    acc.add(a);
+    
     }
     
-    for(Account acc : queryacc){
-        integer Noofprocesscon = 0;
-        if(mapaccwithcon.ContainsKey(acc.id)){
-            Noofprocesscon += mapaccwithcon.get(acc.id).Size();
-        }
-        if(mapaccwithcondel.ContainsKey(acc.Id)){
-            Noofprocesscon -= mapaccwithcon.get(acc.id).Size();
-        }
-
-        acc.Number_of_Contacts__c = acc.Number_of_Contacts__c == null ? Noofprocesscon : (acc.Number_of_Contacts__c + Noofprocesscon);
-    }
-    Update queryacc;
+    update acc;
 }
